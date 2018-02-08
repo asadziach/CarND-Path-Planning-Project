@@ -211,7 +211,7 @@ int main() {
 
   h.onMessage(
       [&lane, &ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
-       &map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+      &map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
           uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
         // The 4 signifies a websocket message
@@ -250,38 +250,56 @@ int main() {
 
               int prev_size = previous_path_x.size();
 
-              if(prev_size > 0){
+              if(prev_size > 0) {
                 car_s = end_path_s;
               }
 
               bool too_close = false;
+              bool right_safe = true;
+              bool left_safe = true;
+
               // find ref_v
-              for(int i =0; i < sensor_fusion.size(); i++){
+              for(int i =0; i < sensor_fusion.size(); i++) {
                 //check if car is in my lane
                 float d = sensor_fusion[i][6];
-                if(d<(2+4*lane+2) && d > (2+4*lane-2)){
-                  double vx = sensor_fusion[i][3];
-                  double vy = sensor_fusion[i][4];
-                  double check_speed = sqrt(vx*vx + vx*vy);
-                  double check_car_s = sensor_fusion[i][5];
+                double check_car_s = sensor_fusion[i][5];
+                for (int check_lane = 0; check_lane < 3; ++check_lane) {
+                  if(d<(2+4*check_lane+2) && d > (2+4*check_lane-2)) {
+                    double vx = sensor_fusion[i][3];
+                    double vy = sensor_fusion[i][4];
+                    double check_speed = sqrt(vx*vx + vx*vy);
 
-                  check_car_s+= ((double)prev_size*.02*check_speed);
-                  //If car is up front and distance is less than 30
-                  if((check_car_s > car_s) && ((check_car_s-car_s) < 30)){
-
-                    too_close = true;
-                    if(lane>0){
-                      lane = 0;
-                    }else if(lane==0){
-                      lane = 1;
+                    check_car_s+= ((double)prev_size*.02*check_speed);
+                    //If car is up front and distance is less than 30
+                    if((check_car_s > car_s) && ((check_car_s-car_s) < 30)) {
+                      if(check_lane==lane) {
+                        too_close = true;
+                      }
+                    }
+                    float diff = abs(check_car_s-car_s);
+                    if( check_lane - lane == 1 && diff < 30) {
+                      right_safe = false;
+                    }
+                    if( check_lane - lane == -1 && diff < 30) {
+                      left_safe = false;
                     }
                   }
                 }
+
               }
 
-              if(too_close){
+              if(too_close) {
                 ref_vel -= acceleration_limit;
-              }else if (ref_vel < speed_limit){
+                if((lane==0 && right_safe)||(lane==2 && left_safe)) {
+                  lane = 1;
+                } else if(lane==1) {
+                  if(left_safe) {
+                    lane = 0;
+                  } else if(right_safe) {
+                    lane = 2;
+                  }
+                }
+              } else if (ref_vel < speed_limit) {
                 ref_vel += acceleration_limit;
               }
 
@@ -302,8 +320,8 @@ int main() {
               double ref_yaw = deg2rad(car_yaw);
 
               //if previous size is almost empty, use car as starting reference.
-              if(prev_size < 2){
-                double prev_car_x = car_x - cos(car_yaw);////
+              if(prev_size < 2) {
+                double prev_car_x = car_x - cos(car_yaw);        ////
                 double prev_car_y = car_y - sin(car_yaw);
 
                 ptsx.push_back(prev_car_x);
@@ -311,7 +329,7 @@ int main() {
 
                 ptsy.push_back(prev_car_y);
                 ptsy.push_back(prev_car_y);
-              }else{
+              } else {
                 ref_x = previous_path_x[prev_size-1];
                 ref_y = previous_path_y[prev_size-1];
 
