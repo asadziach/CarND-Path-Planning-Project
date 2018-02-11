@@ -257,39 +257,58 @@ int main() {
               bool too_close = false;
               bool right_safe = true;
               bool left_safe = true;
+              float accleration = acceleration_limit;
+
+              if(lane==0) {
+                left_safe = false;
+              } else if(lane == 2) {
+                right_safe = false;
+              }
 
               // find ref_v
               for(int i =0; i < sensor_fusion.size(); i++) {
                 //check if car is in my lane
                 float d = sensor_fusion[i][6];
+                double vx = sensor_fusion[i][3];
+                double vy = sensor_fusion[i][4];
+                double check_speed = sqrt(pow(vx,2) + pow(vy,2));
                 double check_car_s = sensor_fusion[i][5];
-                for (int check_lane = 0; check_lane < 3; ++check_lane) {
-                  if(d<(2+4*check_lane+2) && d > (2+4*check_lane-2)) {
-                    double vx = sensor_fusion[i][3];
-                    double vy = sensor_fusion[i][4];
-                    double check_speed = sqrt(vx*vx + vx*vy);
 
-                    check_car_s+= ((double)prev_size*.02*check_speed);
-                    //If car is up front and distance is less than 30
-                    if((check_car_s > car_s) && ((check_car_s-car_s) < 30)) {
-                      if(check_lane==lane) {
+                check_car_s+= ((double)prev_size*.02*check_speed);
+                if(isnan(check_car_s)) {
+                  cout << "check_car_s nan" << endl;
+                  too_close = true;
+                }
+                float diff = abs(check_car_s-car_s);
+                if(diff < 30) {
+                  for (int check_lane = 0; check_lane < 3; ++check_lane) {
+                    if(d<(2+4*check_lane+2) && d > (2+4*check_lane-2)) {
+                      //If car is up front and distance is less than 30
+                      if((check_car_s > car_s) && check_lane==lane) {
                         too_close = true;
+                        if(diff < 5) {
+                          accleration = 0.8;
+                        } else if (diff < 10) {
+                          accleration = 0.6;
+                        } else if (diff < 15) {
+                          accleration = 0.4;
+                        }
                       }
-                    }
-                    float diff = abs(check_car_s-car_s);
-                    if( check_lane - lane == 1 && diff < 30) {
-                      right_safe = false;
-                    }
-                    if( check_lane - lane == -1 && diff < 30) {
-                      left_safe = false;
+
+                      if( check_lane - lane == 1) {
+                        right_safe = false;
+                      }
+                      if( check_lane - lane == -1) {
+                        left_safe = false;
+                      }
                     }
                   }
                 }
 
               }
-
+              cout << "too_close: " << too_close << " left: " << left_safe << " right: " << right_safe << " accl:" << accleration << endl;
               if(too_close) {
-                ref_vel -= acceleration_limit;
+                ref_vel -= accleration;
                 if((lane==0 && right_safe)||(lane==2 && left_safe)) {
                   lane = 1;
                 } else if(lane==1) {
