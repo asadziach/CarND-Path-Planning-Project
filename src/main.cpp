@@ -17,7 +17,7 @@ using json = nlohmann::json;
 
 const double speed_limit = 49.5;
 // 5 m/s2, limit is 10 m/s2
-const double acceleration_limit = .224;
+const double comfort_acceleration = .224;
 
 // For converting back and forth between radians and degrees.
 constexpr double pi() {
@@ -180,8 +180,6 @@ int main() {
 
   // Waypoint map to read from
   string map_file_ = "../data/highway_map.csv";
-  // The max s value before wrapping around the track back to 0
-  double max_s = 6945.554;
 
   ifstream in_map_(map_file_.c_str(), ifstream::in);
 
@@ -257,7 +255,7 @@ int main() {
               bool too_close = false;
               bool right_safe = true;
               bool left_safe = true;
-              float accleration = acceleration_limit;
+              float accleration = comfort_acceleration;
 
               if(lane==0) {
                 left_safe = false;
@@ -275,10 +273,7 @@ int main() {
                 double check_car_s = sensor_fusion[i][5];
 
                 check_car_s+= ((double)prev_size*.02*check_speed);
-                if(isnan(check_car_s)) {
-                  cout << "check_car_s nan" << endl;
-                  too_close = true;
-                }
+
                 float diff = abs(check_car_s-car_s);
                 if(diff < 30) {
                   for (int check_lane = 0; check_lane < 3; ++check_lane) {
@@ -306,7 +301,6 @@ int main() {
                 }
 
               }
-              cout << "too_close: " << too_close << " left: " << left_safe << " right: " << right_safe << " accl:" << accleration << endl;
               if(too_close) {
                 ref_vel -= accleration;
                 if((lane==0 && right_safe)||(lane==2 && left_safe)) {
@@ -319,7 +313,7 @@ int main() {
                   }
                 }
               } else if (ref_vel < speed_limit) {
-                ref_vel += acceleration_limit;
+                ref_vel += comfort_acceleration;
               }
 
               /*
@@ -340,7 +334,7 @@ int main() {
 
               //if previous size is almost empty, use car as starting reference.
               if(prev_size < 2) {
-                double prev_car_x = car_x - cos(car_yaw);        ////
+                double prev_car_x = car_x - cos(car_yaw);
                 double prev_car_y = car_y - sin(car_yaw);
 
                 ptsx.push_back(prev_car_x);
