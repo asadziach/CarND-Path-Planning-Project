@@ -1,14 +1,13 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
    
-s
 ### Goals
 In this project tge goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. I will be provided the car's localization and sensor fusion data, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one lane to another. The car should be able to make one complete loop around the 6946m highway. The car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3.
 
 ![overview](images/overview.png)
 
 ### Route plan, 
-File [data/highway_map.csv] has list of waypoints that go all the way around the track. The track contains a total of 181 waypoints, with the last waypoint mapping back around to the first. The waypoints are in the middle of the double-yellow diving line in the center of the highway.
+File data/highway_map.csv has list of waypoints that go all the way around the track. The track contains a total of 181 waypoints, with the last waypoint mapping back around to the first. The waypoints are in the middle of the double-yellow diving line in the center of the highway.
 The track is 4.32 mile around. The car averages 50 MPH, and it takes around 5 minutes for it to go all the way around the highway.
 The highway has 6 lanes total, 3 heading in each direction. Each lane is 4 m wide and the car is always in one of the 3 lanes on the right-hand side. The car stays inside a lane unless doing a lane change
 
@@ -17,6 +16,7 @@ The highway has 6 lanes total, 3 heading in each direction. Each lane is 4 m wid
 ### Prediction
 Sensor Fusion provides data format for each car is: [ id, x, y, vx, vy, s, d]. The id is a unique identifier for that car. The x, y values are in global map coordinates, and the vx, vy values are the velocity components, also in reference to the global map. Finally s and d are the Frenet coordinates for that car. 
 "Frenet Coordinates", which are a way of representing position on a road in a more intuitive way than traditional (x,y)(x,y) Cartesian Coordinates. With Frenet coordinates, we use the variables s and d to describe a vehicle's position on the road. The s coordinate represents distance along the road and the dd coordinate represents side-to-side position on the road.
+
 ![frenet](images/frenet.png)
 
 The vx, vy values are used for predicting where the cars will be in the future.I assume the tracked car kept moving along the road, then its future predicted Frenet s value are its current s value plus its (transformed) total velocity (m/s) multiplied by the time elapsed into the future (s).
@@ -34,6 +34,7 @@ For safety, a lane change path optimizes the distance away from other traffic. F
 My path planner outputs a list of x and y global map coordinates. Each pair of x and y coordinates is a point, and all of the points together form a trajectory. 
 Every 20 ms the car moves to the next point on the list. The car's new rotation becomes the line between the previous waypoint and the car's new location.
 The car moves from point to point perfectly, so I don't need to build a controller for this simulation.
+
 ![trajectory](images/trajectory.jpg)
 
 I start the new path with whatever previous path points were left over from the last cycle. Then I append new waypoints.Using information from the previous path ensures that there is a smooth transition from cycle to cycle. But the more waypoints I use from the previous path, the less the new path will reflect dynamic changes in the environment.
@@ -44,7 +45,10 @@ The velocity of the car depends on the spacing of the points, the larger the spa
 
 ![trajectoryv](images/trajectory.png)
 
-creating smooth trajectories was using http://kluge.in-chemnitz.de/opensource/spline/
+To create smooth trajectories I use http://kluge.in-chemnitz.de/opensource/spline/
+
+![xy1](images/xy1.jpg)
+![xy2](images/xy2.jpg)
 
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
