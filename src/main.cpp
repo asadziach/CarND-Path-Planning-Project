@@ -282,7 +282,8 @@ int main() {
                       if((check_car_s > car_s) && check_lane==lane) {
                         too_close = true;
                         if(diff < 5) {
-                          accleration = 0.8;
+                          // way too much close, prefer safety over comfort.
+                          accleration = 2;
                         } else if (diff < 10) {
                           accleration = 0.6;
                         } else if (diff < 15) {
