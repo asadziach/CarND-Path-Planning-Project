@@ -48,7 +48,7 @@ The velocity of the car depends on the spacing of the points, the larger the spa
 To create smooth trajectories I use http://kluge.in-chemnitz.de/opensource/spline/
 
 ![xy1](images/xy1.jpg)
-![xy2](images/xy2.jpg)
+![xy2](images/xy2.png)
 
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
